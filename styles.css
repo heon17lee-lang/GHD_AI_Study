@@ -1097,13 +1097,12 @@ a:focus-visible {
   border-radius: 120px 120px 32px 32px;
   background-color: var(--white);
   filter: drop-shadow(8px 10px 0 color-mix(in srgb, var(--result-color) 45%, white));
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center;
   transform: translateX(50%);
 }
 
 .result-character-video {
-  object-fit: cover;
-  object-position: center;
   pointer-events: none;
 }
 
