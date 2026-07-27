@@ -24,7 +24,7 @@ python3 -m http.server 8000
 - `scoring.js`: 영역별 점수 계산과 결과 유형 판정
 - `app.js`: 화면 전환, 응답 처리 및 결과 표시
 - `assets/steps/`: STEP별 맥락 일러스트 6종
-- `assets/results/`: 결과 유형별 전용 캐릭터 이미지 6종 및 워밍업러 반복 영상
+- `assets/results/`: 결과 유형별 전용 캐릭터 이미지와 반복 영상 각 6종
 - `.nojekyll`: GitHub Pages의 Jekyll 처리를 비활성화
 
 ## 데이터 처리

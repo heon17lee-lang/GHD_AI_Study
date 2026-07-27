@@ -529,6 +529,7 @@
       icon: "🧭",
       color: "#709fe7",
       image: "./assets/results/curious-explorer.png",
+      video: "./assets/results/curious-explorer.mp4",
       tagline: "관심과 아이디어는 충분하지만, 아직 본격적으로 활용할 기회를 찾는 중이에요.",
       strength:
         "새로운 방식에 열려 있고 교육 참여 동기가 높아요. 구체적인 사례를 만나면 빠르게 시도할 수 있습니다.",
@@ -546,6 +547,7 @@
       icon: "✍️",
       color: "#78cfb3",
       image: "./assets/results/prompt-designer.png",
+      video: "./assets/results/prompt-designer.mp4",
       tagline: "AI가 알아듣기 쉽게 상황과 조건을 정리하는 감각이 좋은 타입이에요.",
       strength:
         "대상, 목적, 조건과 결과 형식을 구조화하는 능력이 좋아요. AI와의 반복 대화도 능숙합니다.",
@@ -563,6 +565,7 @@
       icon: "🔎",
       color: "#ffb45f",
       image: "./assets/results/quality-editor.png",
+      video: "./assets/results/quality-editor.mp4",
       tagline: "AI 결과를 그대로 믿기보다 꼼꼼하게 확인하는 안정형 사용자예요.",
       strength:
         "팩트체크와 위험 요소 발견에 강하고, 사내 기준에 맞는 결과물을 만들려는 감각이 좋아요.",
@@ -580,6 +583,7 @@
       icon: "🛠️",
       color: "#ff8e7a",
       image: "./assets/results/practical-maker.png",
+      video: "./assets/results/practical-maker.mp4",
       tagline: "AI를 실제 업무에 연결해 결과물을 만들어본 경험이 있는 실행형이에요.",
       strength:
         "도구에 대한 심리적 장벽이 낮고, 초안과 아이디어를 실제 결과물로 연결하는 힘이 있어요.",
@@ -597,6 +601,7 @@
       icon: "🎬",
       color: "#e97f93",
       image: "./assets/results/workflow-director.png",
+      video: "./assets/results/workflow-director.mp4",
       tagline: "질문, 활용, 검증의 균형이 좋은 AI 협업형 사용자예요.",
       strength:
         "AI를 실제 업무에 연결하면서 요청 조건, 결과 형식, 정확성과 보안을 함께 고려할 수 있어요.",
