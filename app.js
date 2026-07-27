@@ -523,11 +523,32 @@
           <div class="result-character-stage">
             <span class="stage-note stage-note-left" aria-hidden="true">질문 ✓</span>
             <span class="stage-note stage-note-right" aria-hidden="true">검수 ✓</span>
-            <img
-              class="result-character"
-              src="${type.image}"
-              alt="${type.name} 캐릭터"
-            />
+            ${
+              type.video
+                ? `
+                  <video
+                    class="result-character result-character-video"
+                    autoplay
+                    muted
+                    loop
+                    playsinline
+                    preload="auto"
+                    poster="${type.image}"
+                    tabindex="-1"
+                    aria-label="${type.name} 캐릭터 애니메이션"
+                    disablepictureinpicture
+                  >
+                    <source src="${type.video}" type="video/mp4" />
+                  </video>
+                `
+                : `
+                  <img
+                    class="result-character"
+                    src="${type.image}"
+                    alt="${type.name} 캐릭터"
+                  />
+                `
+            }
             <span class="stage-spark spark-left" aria-hidden="true">✦</span>
             <span class="stage-spark spark-right" aria-hidden="true">✦</span>
           </div>

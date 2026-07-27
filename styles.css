@@ -1101,6 +1101,21 @@ a:focus-visible {
   transform: translateX(50%);
 }
 
+.result-character-video {
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+}
+
+.result-character-video::-webkit-media-controls,
+.result-character-video::-webkit-media-controls-enclosure,
+.result-character-video::-webkit-media-controls-panel,
+.result-character-video::-webkit-media-controls-play-button,
+.result-character-video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  -webkit-appearance: none;
+}
+
 .stage-note {
   position: absolute;
   z-index: 3;

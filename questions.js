@@ -511,6 +511,7 @@
       icon: "🌱",
       color: "#a999ff",
       image: "./assets/results/ai-warmup.png",
+      video: "./assets/results/ai-warmup.mp4",
       tagline: "AI와 아직 조금 어색하지만, 이제 막 친해질 준비를 시작한 타입이에요.",
       strength:
         "기존 업무 방식과 기준을 잘 알고 있어요. 단계별로 익히면 안정적으로 성장할 가능성이 높습니다.",
