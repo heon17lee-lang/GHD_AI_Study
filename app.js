@@ -17,6 +17,9 @@
     optionOrder: {},
   };
 
+  let preparedResultCardKey = "";
+  let preparedResultCardPromise = null;
+
   const escapeHtml = (value = "") =>
     String(value)
       .replaceAll("&", "&amp;")
@@ -598,9 +601,9 @@
         </div>
 
         <div class="result-actions">
-          <button class="primary-button" data-action="download-card">
-            <span aria-hidden="true">↓</span>
-            공유용 결과 카드 저장하기
+          <button class="primary-button" data-action="share-card" disabled>
+            <span aria-hidden="true">↗</span>
+            공유 카드 준비 중...
           </button>
           <button class="secondary-button" data-action="restart">
             다시 해보기
@@ -612,6 +615,10 @@
         </p>
       </section>
     `;
+
+    prepareResultCard()
+      .then(() => updateShareButton(true))
+      .catch(() => updateShareButton(true));
   }
 
   function roundedRect(context, x, y, width, height, radius) {
@@ -696,15 +703,7 @@
     });
   }
 
-  async function downloadResultCard() {
-    const button = document.querySelector('[data-action="download-card"]');
-    const previousLabel = button?.innerHTML;
-    if (button) {
-      button.disabled = true;
-      button.textContent = "공유 카드를 만드는 중...";
-    }
-
-    try {
+  async function createResultCard() {
       const result = scoring.calculateResult(state.answers);
       const type = data.resultTypes[result.type];
       const canvas = document.createElement("canvas");
@@ -854,20 +853,109 @@
       context.fillText("퇴근 메이트 찾기  ✦", 988, 1364);
 
       const blob = await canvasToBlob(canvas);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
       const safeTypeName = type.name.replace(/\s+/g, "-");
-      link.href = url;
-      link.download = `퇴근-메이트-결과-${safeTypeName}.png`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-      showToast("3:4 공유용 결과 카드를 저장했어요.");
+      return {
+        blob,
+        filename: `퇴근-메이트-결과-${safeTypeName}.png`,
+        title: `${state.nickname}님의 ${type.name}`,
+        text: type.cardLine,
+      };
+  }
+
+  function resultCardKey() {
+    const result = scoring.calculateResult(state.answers);
+    const scores = scoring.dimensionOrder
+      .map((key) => result.normalized[key])
+      .join("-");
+    return `${state.nickname}-${result.type}-${scores}`;
+  }
+
+  function prepareResultCard() {
+    const nextKey = resultCardKey();
+    if (
+      preparedResultCardPromise &&
+      preparedResultCardKey === nextKey
+    ) {
+      return preparedResultCardPromise;
+    }
+
+    preparedResultCardKey = nextKey;
+    preparedResultCardPromise = createResultCard().catch((error) => {
+      preparedResultCardPromise = null;
+      throw error;
+    });
+    return preparedResultCardPromise;
+  }
+
+  function updateShareButton(isReady) {
+    const button = document.querySelector('[data-action="share-card"]');
+    if (!button) return;
+    button.disabled = !isReady;
+    button.innerHTML = `
+      <span aria-hidden="true">↗</span>
+      결과 공유하기
+    `;
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function shareResultCard() {
+    const button = document.querySelector('[data-action="share-card"]');
+    const previousLabel = button?.innerHTML;
+    let card;
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = "공유창을 여는 중...";
+    }
+
+    try {
+      card = await prepareResultCard();
+      const supportsFileShare =
+        typeof File === "function" &&
+        typeof navigator.share === "function" &&
+        typeof navigator.canShare === "function";
+
+      if (supportsFileShare) {
+        const file = new File([card.blob], card.filename, {
+          type: "image/png",
+        });
+
+        if (navigator.canShare({ files: [file] })) {
+          const pageUrl = window.location.href.split("#")[0];
+          await navigator.share({
+            files: [file],
+            title: card.title,
+            text: `${card.text}\n${pageUrl}`,
+          });
+          showToast("결과 카드를 공유했어요.");
+          return;
+        }
+      }
+
+      downloadBlob(card.blob, card.filename);
+      showToast("공유 기능을 지원하지 않아 PNG로 저장했어요.");
     } catch (error) {
+      if (error?.name === "AbortError") return;
+
+      if (card?.blob) {
+        downloadBlob(card.blob, card.filename);
+        showToast("공유창을 열지 못해 PNG로 저장했어요.");
+        return;
+      }
+
       showToast(
         window.location.protocol === "file:"
-          ? "이미지 저장은 로컬 서버나 GitHub Pages에서 이용해주세요."
+          ? "공유 기능은 로컬 서버나 GitHub Pages에서 이용해주세요."
           : "결과 카드를 만들지 못했어요. 잠시 후 다시 시도해주세요.",
       );
     } finally {
@@ -886,6 +974,8 @@
     state.answers = {};
     state.feedbackVisible = false;
     state.optionOrder = {};
+    preparedResultCardKey = "";
+    preparedResultCardPromise = null;
     render();
     focusMain();
   }
@@ -942,7 +1032,7 @@
     }
     if (action === "back") goBack();
     if (action === "next") goNext();
-    if (action === "download-card") downloadResultCard();
+    if (action === "share-card") shareResultCard();
     if (action === "restart") restart();
   });
 
