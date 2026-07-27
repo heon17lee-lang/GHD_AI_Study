@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="나는 AI와 어떻게 일하는 사람일까? 10분 만에 알아보는 AI 업무 스타일 진단"
+    />
+    <meta name="theme-color" content="#fff9f4" />
+    <title>퇴근 메이트 찾기 | AI 업무 스타일 테스트</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./questions.js" defer></script>
+    <script src="./scoring.js" defer></script>
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#app">본문으로 바로가기</a>
+
+    <header class="site-header">
+      <a
+        class="brand"
+        href="./"
+        aria-label="퇴근 메이트 찾기 메인 화면으로"
+        title="메인 화면으로 돌아가기"
+      >
+        <span class="brand-mark" aria-hidden="true">✦</span>
+        <span>퇴근 메이트 찾기</span>
+      </a>
+      <span class="time-chip">약 10분</span>
+    </header>
+
+    <main id="app" class="app-shell" tabindex="-1">
+      <div class="loading-card" aria-live="polite">
+        <span class="loading-dot"></span>
+        <span class="loading-dot"></span>
+        <span class="loading-dot"></span>
+        <p>나의 AI 메이트를 불러오는 중...</p>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <span aria-hidden="true">🔒</span>
+      <span>응답은 저장되거나 외부로 전송되지 않아요.</span>
+    </footer>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <noscript>
+      <div class="noscript">
+        이 테스트를 진행하려면 브라우저에서 JavaScript를 활성화해주세요.
+      </div>
+    </noscript>
+  </body>
+</html>
