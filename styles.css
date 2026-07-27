@@ -1159,7 +1159,7 @@ a:focus-visible {
 }
 
 .result-intro h1 {
-  margin: 0;
+  margin: clamp(14px, 2vw, 22px) 0 0;
   font-size: clamp(36px, 7vw, 54px);
   line-height: 1.15;
   letter-spacing: -0.055em;
