@@ -69,10 +69,14 @@
 
   function initializeOptionOrder() {
     state.optionOrder = Object.fromEntries(
-      data.questions.map((question) => [
-        question.id,
-        shuffled(question.options.map((option) => option.value)),
-      ]),
+      data.questions.map((question) => {
+        const values = question.options.map((option) => option.value);
+        const order =
+          question.type === "ox"
+            ? ["o", "x"].filter((value) => values.includes(value))
+            : shuffled(values);
+        return [question.id, order];
+      }),
     );
   }
 
@@ -683,15 +687,49 @@
     });
   }
 
-  function drawImageContain(context, image, x, y, width, height) {
+  function drawRoundedImageCover(
+    context,
+    image,
+    x,
+    y,
+    width,
+    height,
+    radius,
+  ) {
     const sourceWidth = image.naturalWidth || image.width;
     const sourceHeight = image.naturalHeight || image.height;
-    const scale = Math.min(width / sourceWidth, height / sourceHeight);
+    const scale = Math.max(width / sourceWidth, height / sourceHeight);
     const drawWidth = sourceWidth * scale;
     const drawHeight = sourceHeight * scale;
     const drawX = x + (width - drawWidth) / 2;
     const drawY = y + (height - drawHeight) / 2;
+
+    context.save();
+    roundedRect(context, x, y, width, height, radius);
+    context.clip();
     context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+    context.restore();
+  }
+
+  function setFittedFont(
+    context,
+    text,
+    maxWidth,
+    maxSize,
+    minSize,
+    weight,
+  ) {
+    let size = maxSize;
+    const family =
+      'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+
+    while (size > minSize) {
+      context.font = `${weight} ${size}px ${family}`;
+      if (context.measureText(text).width <= maxWidth) break;
+      size -= 2;
+    }
+
+    return size;
   }
 
   function canvasToBlob(canvas) {
@@ -704,162 +742,117 @@
   }
 
   async function createResultCard() {
-      const result = scoring.calculateResult(state.answers);
-      const type = data.resultTypes[result.type];
-      const canvas = document.createElement("canvas");
-      canvas.width = 1080;
-      canvas.height = 1440;
-      const context = canvas.getContext("2d");
-      const centerX = canvas.width / 2;
+    const result = scoring.calculateResult(state.answers);
+    const type = data.resultTypes[result.type];
+    const canvas = document.createElement("canvas");
+    canvas.width = 1080;
+    canvas.height = 1920;
+    const context = canvas.getContext("2d");
+    const centerX = canvas.width / 2;
 
-      context.imageSmoothingEnabled = true;
-      context.imageSmoothingQuality = "high";
-      context.fillStyle = "#fff9f4";
-      context.fillRect(0, 0, canvas.width, canvas.height);
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+    context.fillStyle = "#fff9f4";
+    context.fillRect(0, 0, canvas.width, canvas.height);
 
-      context.globalAlpha = 0.17;
-      context.fillStyle = type.color;
-      context.beginPath();
-      context.arc(116, 112, 180, 0, Math.PI * 2);
-      context.fill();
-      context.beginPath();
-      context.arc(1010, 700, 220, 0, Math.PI * 2);
-      context.fill();
-      context.globalAlpha = 1;
+    context.globalAlpha = 0.17;
+    context.fillStyle = type.color;
+    context.beginPath();
+    context.arc(60, 105, 235, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.arc(1050, 1600, 270, 0, Math.PI * 2);
+    context.fill();
+    context.globalAlpha = 1;
 
-      context.shadowColor = "rgba(57, 43, 79, 0.12)";
-      context.shadowBlur = 32;
-      context.shadowOffsetY = 16;
-      fillRoundedRect(context, 48, 48, 984, 730, 42, "#ffffff");
-      fillRoundedRect(context, 48, 816, 984, 576, 42, "#ffffff");
-      context.shadowColor = "transparent";
+    context.shadowColor = "rgba(57, 43, 79, 0.13)";
+    context.shadowBlur = 36;
+    context.shadowOffsetY = 18;
+    fillRoundedRect(context, 54, 54, 972, 1812, 52, "#ffffff");
+    context.shadowColor = "transparent";
 
-      fillRoundedRect(context, 350, 84, 380, 58, 29, "#f4f2f6");
-      context.fillStyle = "#55536a";
-      context.font =
-        '800 24px Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      context.textAlign = "center";
-      context.textBaseline = "middle";
-      context.fillText(
-        `${state.nickname}님의 AI 업무 스타일`,
-        centerX,
-        113,
-      );
+    fillRoundedRect(context, 270, 104, 540, 70, 35, "#f4f2f6");
+    context.fillStyle = "#55536a";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    setFittedFont(
+      context,
+      `${state.nickname}님의 AI 업무 스타일`,
+      480,
+      28,
+      22,
+      800,
+    );
+    context.fillText(
+      `${state.nickname}님의 AI 업무 스타일`,
+      centerX,
+      139,
+    );
 
-      const characterImage = await loadImage(type.image);
-      drawImageContain(context, characterImage, 340, 145, 400, 420);
+    fillRoundedRect(context, 185, 236, 740, 1050, 230, type.color);
+    const characterImage = await loadImage(type.image);
+    drawRoundedImageCover(
+      context,
+      characterImage,
+      170,
+      220,
+      740,
+      1050,
+      230,
+    );
 
-      context.fillStyle = type.color;
-      context.font =
-        '900 36px Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      context.fillText("✦", 176, 165);
-      context.fillText("✦", 900, 225);
+    context.fillStyle = type.color;
+    context.font =
+      '900 46px Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    context.fillText("✦", 132, 260);
+    context.font =
+      '900 34px Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    context.fillText("✦", 946, 390);
 
-      context.fillStyle = "#25243a";
-      context.font =
-        '900 58px Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      context.fillText(type.name, centerX, 590);
+    context.fillStyle = "#25243a";
+    setFittedFont(context, type.name, 900, 86, 56, 900);
+    context.fillText(type.name, centerX, 1375);
 
-      context.fillStyle = "#55536a";
-      context.font =
-        '500 25px Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      drawCenteredLines(
-        context,
-        type.tagline,
-        centerX,
-        644,
-        820,
-        36,
-        2,
-      );
+    context.fillStyle = "#55536a";
+    context.font =
+      '600 32px Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    drawCenteredLines(
+      context,
+      type.tagline,
+      centerX,
+      1485,
+      850,
+      48,
+      3,
+    );
 
-      fillRoundedRect(context, 220, 710, 640, 44, 15, "#fff0ec");
-      context.fillStyle = "#25243a";
-      context.font =
-        '800 18px Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      context.fillText(type.cardLine, centerX, 732, 590);
+    fillRoundedRect(context, 130, 1625, 820, 170, 36, "#fff0ec");
+    context.fillStyle = "#25243a";
+    context.font =
+      '800 29px Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    drawCenteredLines(
+      context,
+      type.cardLine,
+      centerX,
+      1684,
+      720,
+      44,
+      2,
+    );
 
-      context.textAlign = "left";
-      context.fillStyle = "#ff8e7a";
-      context.font =
-        '900 17px Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      context.fillText("MY BALANCE", 92, 876);
-      context.fillStyle = "#25243a";
-      context.font =
-        '900 34px Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      context.fillText("나의 AI 협업 밸런스", 92, 928);
+    context.fillStyle = "#8f8999";
+    context.font =
+      '800 23px Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    context.fillText("퇴근 메이트 찾기  ✦", centerX, 1830);
 
-      fillRoundedRect(context, 932, 858, 56, 56, 18, "#ffd66b");
-      context.fillStyle = "#25243a";
-      context.font =
-        '900 24px Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      context.textAlign = "center";
-      context.fillText("✦", 960, 887);
-
-      scoring.dimensionOrder.forEach((key, index) => {
-        const dimension = data.dimensions[key];
-        const score = result.normalized[key];
-        const rowY = 990 + index * 73;
-
-        context.textAlign = "left";
-        context.fillStyle = "#25243a";
-        context.font =
-          '800 21px Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-        context.fillText(
-          `${dimension.icon}  ${dimension.label}`,
-          92,
-          rowY,
-        );
-
-        context.textAlign = "right";
-        context.fillStyle = "#7f7a8c";
-        context.font =
-          '700 17px Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-        context.fillText(scoring.levelLabel(score), 988, rowY);
-
-        fillRoundedRect(context, 92, rowY + 18, 896, 14, 7, "#e9e7ee");
-        const gradient = context.createLinearGradient(
-          92,
-          0,
-          92 + 896,
-          0,
-        );
-        gradient.addColorStop(0, type.color);
-        gradient.addColorStop(1, "#ff8e7a");
-        fillRoundedRect(
-          context,
-          92,
-          rowY + 18,
-          Math.max(36, 896 * (score / 100)),
-          14,
-          7,
-          gradient,
-        );
-      });
-
-      context.textAlign = "left";
-      context.fillStyle = "#9691a0";
-      context.font =
-        '500 15px Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      context.fillText(
-        "점수는 등수가 아니라 다음 교육을 더 잘 맞추기 위한 참고 지표예요.",
-        92,
-        1364,
-      );
-      context.textAlign = "right";
-      context.fillStyle = "#25243a";
-      context.font =
-        '900 15px Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      context.fillText("퇴근 메이트 찾기  ✦", 988, 1364);
-
-      const blob = await canvasToBlob(canvas);
-      const safeTypeName = type.name.replace(/\s+/g, "-");
-      return {
-        blob,
-        filename: `퇴근-메이트-결과-${safeTypeName}.png`,
-        title: `${state.nickname}님의 ${type.name}`,
-        text: type.cardLine,
-      };
+    const blob = await canvasToBlob(canvas);
+    const safeTypeName = type.name.replace(/\s+/g, "-");
+    return {
+      blob,
+      filename: `퇴근-메이트-결과-${safeTypeName}.png`,
+      title: `${state.nickname}님의 ${type.name}`,
+      text: type.cardLine,
+    };
   }
 
   function resultCardKey() {
