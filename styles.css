@@ -120,16 +120,6 @@ a:focus-visible {
   box-shadow: 3px 3px 0 var(--yellow);
 }
 
-.time-chip {
-  padding: 7px 12px;
-  border: 1px solid rgba(37, 36, 58, 0.1);
-  border-radius: 999px;
-  color: var(--navy-soft);
-  background: rgba(255, 255, 255, 0.7);
-  font-size: 13px;
-  font-weight: 700;
-}
-
 .app-shell {
   width: min(calc(100% - 32px), var(--content-width));
   min-height: calc(100vh - 142px);

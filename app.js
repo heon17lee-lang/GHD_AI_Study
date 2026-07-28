@@ -212,7 +212,7 @@
           </span>
           <span class="mascot-spark">✦</span>
         </div>
-        <h1 id="welcome-title">오늘 나와 퇴근할<br /><em>AI 메이트</em>는 누구?</h1>
+        <h1 id="welcome-title">오늘부터 함께 일할<br /><em>AI 메이트</em>는 누구?</h1>
         <p class="welcome-copy">
           정답을 많이 맞히는 시험이 아니에요.<br />
           지금 나와 가장 가까운 답을 고르면<br />
@@ -1188,13 +1188,13 @@
     context.fillStyle = "#8f8999";
     context.font =
       '800 23px Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    context.fillText("퇴근 메이트 찾기  ✦", centerX, 1830);
+    context.fillText("AI 업무 메이트 찾기  ✦", centerX, 1830);
 
     const blob = await canvasToBlob(canvas);
     const safeTypeName = type.name.replace(/\s+/g, "-");
     return {
       blob,
-      filename: `퇴근-메이트-결과-${safeTypeName}.png`,
+      filename: `AI-업무-메이트-결과-${safeTypeName}.png`,
       title: `${state.nickname}님의 ${type.name}`,
       text: type.cardLine,
     };
