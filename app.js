@@ -91,10 +91,14 @@
     state.optionOrder = Object.fromEntries(
       data.questions.map((question) => {
         const values = question.options.map((option) => option.value);
-        const order =
-          question.type === "ox"
-            ? ["o", "x"].filter((value) => values.includes(value))
-            : shuffled(values);
+        let order;
+        if (question.type === "ox") {
+          order = ["o", "x"].filter((value) => values.includes(value));
+        } else if (question.ordered) {
+          order = values;
+        } else {
+          order = shuffled(values);
+        }
         return [question.id, order];
       }),
     );

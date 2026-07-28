@@ -89,6 +89,7 @@
       chapter: "first-meet",
       dimension: "awareness",
       type: "single",
+      ordered: true,
       title: "업무가 막혔을 때 AI에게 도움을 요청하는 것은 어떤 느낌인가요?",
       helper: "지금 내 마음과 가장 가까운 답을 골라주세요.",
       options: [
@@ -132,6 +133,7 @@
       chapter: "first-meet",
       dimension: "awareness",
       type: "single",
+      ordered: true,
       title: "AI에게 처음 보는 업무를 맡겨보라는 제안을 받았습니다. 나의 반응은?",
       options: [
         { value: "a", label: "실패할 것 같아 기존 방식으로 처리한다", score: 0 },
@@ -145,6 +147,7 @@
       chapter: "history",
       dimension: "experience",
       type: "single",
+      ordered: true,
       title: "최근 한 달 동안 생성형 AI를 얼마나 사용했나요?",
       helper: "업무와 개인적인 사용을 모두 포함해 주세요.",
       options: [
@@ -182,6 +185,7 @@
       chapter: "history",
       dimension: "experience",
       type: "single",
+      ordered: true,
       title: "AI를 사용할 때 가장 가까운 모습은?",
       options: [
         { value: "a", label: "다른 사람이 알려준 문장을 그대로 입력한다", score: 0 },
@@ -195,6 +199,7 @@
       chapter: "history",
       dimension: "experience",
       type: "single",
+      ordered: true,
       title: "AI를 사용한 뒤 실제 업무 결과물에 반영한 경험은 어느 정도인가요?",
       options: [
         { value: "a", label: "AI를 업무에 사용한 적이 없다", score: 0 },
