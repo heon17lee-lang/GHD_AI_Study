@@ -3,14 +3,29 @@
 
   const data = window.APP_DATA;
   const scoring = window.SCORING;
+  const mbtiData = window.MBTI_DATA;
   const app = document.querySelector("#app");
   const toast = document.querySelector("#toast");
   const brand = document.querySelector(".brand");
 
+  const LOADING_MESSAGES = [
+    "AI도 준비할 시간이 필요해요",
+    "그거 아세요? AI는 잠을 안 자요, 그래도 몸풀기는 필요해요",
+    "오늘 만날 질문들을 살짝 훑어보는 중",
+    "커피 대신 데이터를 한 잔 마시는 중",
+    "사실 이 로딩바는 서두를 필요 없어요",
+    "AI: 저 지금 긴장돼요...",
+    "옷매무새 다듬고 마이크 테스트 중",
+    "TMI: 기다림도 하나의 콘텐츠가 될 수 있어요",
+    "신발끈 한 번 더 묶는 중",
+    "거의 다 왔어요, 조금만 더 기다려주세요",
+  ];
+
   const state = {
-    screen: "welcome",
+    screen: "loading",
     nickname: "",
     jobTasks: [],
+    mbti: null,
     currentQuestionIndex: 0,
     answers: {},
     feedbackVisible: false,
@@ -48,6 +63,7 @@
   }
 
   function render() {
+    if (state.screen === "loading") renderLoading();
     if (state.screen === "welcome") renderWelcome();
     if (state.screen === "profile") renderProfile();
     if (state.screen === "chapter") renderChapterBreak();
@@ -88,6 +104,91 @@
         question.options.find((option) => option.value === value),
       )
       .filter(Boolean);
+  }
+
+  function renderLoading() {
+    app.className = "app-shell loading-shell";
+    const messages = shuffled(LOADING_MESSAGES);
+    app.innerHTML = `
+      <section class="boot-card" aria-live="polite">
+        <div class="boot-topbar">
+          <span class="boot-led" aria-hidden="true"></span>
+          <span>AI SYSTEM BOOT</span>
+        </div>
+        <div class="boot-screen">
+          <p class="boot-message" id="boot-message">${escapeHtml(messages[0])}</p>
+          <div class="boot-bar-track">
+            <div class="boot-bar-fill" id="boot-bar-fill" style="width:0%"></div>
+          </div>
+          <div class="boot-percent-row">
+            <span class="boot-percent" id="boot-percent">0<span>%</span></span>
+            <span class="boot-cursor" aria-hidden="true">_</span>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="primary-button boot-enter-button"
+          id="boot-enter-button"
+          data-action="welcome"
+          hidden
+        >
+          입장하기
+          <span aria-hidden="true">→</span>
+        </button>
+      </section>
+    `;
+    runBootSequence(messages);
+  }
+
+  function runBootSequence(messages) {
+    const totalDuration = 12000;
+    const messageInterval = 3000;
+    const barFill = document.querySelector("#boot-bar-fill");
+    const percentEl = document.querySelector("#boot-percent");
+    const messageEl = document.querySelector("#boot-message");
+    const enterButton = document.querySelector("#boot-enter-button");
+    if (!barFill || !percentEl || !messageEl || !enterButton) return;
+
+    const reducedMotion =
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedMotion) {
+      barFill.style.width = "100%";
+      percentEl.innerHTML = "100<span>%</span>";
+      enterButton.hidden = false;
+      enterButton.classList.add("is-visible");
+      return;
+    }
+
+    const startTime = performance.now();
+    let currentBucket = 0;
+
+    function tick(now) {
+      if (state.screen !== "loading") return;
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / totalDuration, 1);
+      const percent = Math.round(progress * 100);
+      barFill.style.width = `${percent}%`;
+      percentEl.innerHTML = `${percent}<span>%</span>`;
+
+      const bucket = Math.min(
+        Math.floor(elapsed / messageInterval),
+        messages.length - 1,
+      );
+      if (bucket !== currentBucket) {
+        currentBucket = bucket;
+        messageEl.textContent = messages[bucket];
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        enterButton.hidden = false;
+        requestAnimationFrame(() => enterButton.classList.add("is-visible"));
+      }
+    }
+
+    requestAnimationFrame(tick);
   }
 
   function renderWelcome() {
@@ -150,6 +251,25 @@
       })
       .join("");
 
+    const mbtiButtons = mbtiData.order
+      .map((code) => {
+        const type = mbtiData.types[code];
+        const selected = state.mbti === code;
+        return `
+          <button
+            type="button"
+            class="mbti-chip ${selected ? "is-selected" : ""}"
+            data-mbti="${code}"
+            aria-pressed="${selected}"
+          >
+            <span aria-hidden="true">${type.emoji}</span>
+            <span>${code}</span>
+          </button>
+        `;
+      })
+      .join("");
+    const mbtiUnknownSelected = state.mbti === "unknown";
+
     app.innerHTML = `
       <section class="question-card profile-card" aria-labelledby="profile-title">
         <div class="profile-step">시작 전, 잠깐만요</div>
@@ -179,6 +299,22 @@
           ${taskButtons}
         </div>
 
+        <div class="field-heading">
+          <span class="field-label">MBTI (선택)</span>
+          <span>결과에 보너스 팁으로만 사용돼요</span>
+        </div>
+        <div class="mbti-grid" role="group" aria-label="MBTI 선택">
+          ${mbtiButtons}
+        </div>
+        <button
+          type="button"
+          class="mbti-unknown ${mbtiUnknownSelected ? "is-selected" : ""}"
+          data-mbti="unknown"
+          aria-pressed="${mbtiUnknownSelected}"
+        >
+          ${mbtiData.unknownLabel}
+        </button>
+
         <div class="sticky-actions profile-actions">
           <button class="text-button" data-action="welcome">이전</button>
           <button
@@ -195,7 +331,11 @@
   }
 
   function isProfileValid() {
-    return state.nickname.trim().length >= 2 && state.jobTasks.length > 0;
+    return (
+      state.nickname.trim().length >= 2 &&
+      state.jobTasks.length > 0 &&
+      Boolean(state.mbti)
+    );
   }
 
   function renderChapterBreak() {
@@ -501,7 +641,7 @@
     const strength = data.dimensions[result.topStrength];
     const growth = data.dimensions[result.growthArea];
     const bars = scoring.dimensionOrder
-      .map((key) => {
+      .map((key, index) => {
         const dimension = data.dimensions[key];
         const score = result.normalized[key];
         return `
@@ -513,12 +653,58 @@
             <div class="skill-track" aria-label="${dimension.label}: ${scoring.levelLabel(
               score,
             )}">
-              <span style="width:${Math.max(score, 4)}%"></span>
+              <span style="width:${Math.max(
+                score,
+                4,
+              )}%; animation-delay:${index * 90}ms"></span>
             </div>
           </div>
         `;
       })
       .join("");
+
+    const mbtiType =
+      state.mbti && state.mbti !== "unknown"
+        ? mbtiData.types[state.mbti]
+        : null;
+    const combo = mbtiType ? mbtiData.getCombo(state.mbti, result.type) : null;
+    const mbtiSection = mbtiType
+      ? `
+        <article class="result-panel mbti-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="panel-kicker">BONUS · MBTI</span>
+              <h2>${mbtiType.emoji} ${escapeHtml(state.mbti)}인 ${escapeHtml(
+                state.nickname,
+              )}님에게 추천해요</h2>
+            </div>
+            <span class="mini-sticker mbti-sticker" aria-hidden="true">${
+              mbtiType.emoji
+            }</span>
+          </div>
+          <div class="mbti-badge">${mbtiType.title}</div>
+          ${
+            combo
+              ? `
+                <div class="combo-card">
+                  <span class="combo-label">${escapeHtml(
+                    state.mbti,
+                  )} × ${type.name} = ${combo.label}</span>
+                  <p class="combo-line">${combo.line}</p>
+                </div>
+              `
+              : ""
+          }
+          <p>${mbtiType.summary}</p>
+          <ul class="mbti-tip-list">
+            ${mbtiType.tips.map((tip) => `<li>${tip}</li>`).join("")}
+          </ul>
+          <p class="mbti-disclaimer">
+            MBTI는 재미로 곁들이는 보너스 콘텐츠예요. 위 진단 결과와는 무관해요.
+          </p>
+        </article>
+      `
+      : "";
 
     app.innerHTML = `
       <section
@@ -562,6 +748,22 @@
           <h1>${type.name}</h1>
           <p>${type.tagline}</p>
           <div class="result-ribbon">${type.cardLine}</div>
+
+          <div class="readiness-row">
+            <div
+              class="readiness-badge"
+              data-readiness="${result.readiness}"
+              style="--pct:0"
+              role="img"
+              aria-label="AI 준비도 0%"
+            >
+              <span class="readiness-number" aria-hidden="true">0<small>%</small></span>
+            </div>
+            <div class="readiness-copy">
+              <span class="readiness-title">AI 준비도</span>
+              <span class="readiness-desc">오늘 답변을 100점 만점으로 환산했어요</span>
+            </div>
+          </div>
         </div>
 
         <div class="result-grid">
@@ -590,6 +792,8 @@
             <p>${type.growth}</p>
             <div class="insight-tag">이번 교육의 성장 포인트 · ${growth.label}</div>
           </article>
+
+          ${mbtiSection}
 
           <article class="result-panel mission-panel">
             <div class="mission-badge">첫 번째 추천 미션</div>
@@ -623,6 +827,92 @@
     prepareResultCard()
       .then(() => updateShareButton(true))
       .catch(() => updateShareButton(true));
+
+    playResultReveal(result.readiness);
+  }
+
+  function prefersReducedMotion() {
+    return (
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    );
+  }
+
+  function playResultReveal(readiness) {
+    const badge = document.querySelector(".readiness-badge");
+    if (!badge) return;
+
+    if (prefersReducedMotion()) {
+      badge.style.setProperty("--pct", readiness);
+      badge.querySelector(".readiness-number").innerHTML =
+        `${readiness}<small>%</small>`;
+      badge.setAttribute("aria-label", `AI 준비도 ${readiness}%`);
+      return;
+    }
+
+    const duration = 1100;
+    const startDelay = 250;
+    const numberEl = badge.querySelector(".readiness-number");
+    const startTime = performance.now() + startDelay;
+    let vibrated = false;
+
+    function tick(now) {
+      const elapsed = now - startTime;
+      if (elapsed < 0) {
+        requestAnimationFrame(tick);
+        return;
+      }
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const value = Math.round(eased * readiness);
+      badge.style.setProperty("--pct", value);
+      numberEl.innerHTML = `${value}<small>%</small>`;
+
+      if (!vibrated) {
+        vibrated = true;
+        if (navigator.vibrate) navigator.vibrate(12);
+      }
+
+      if (progress >= 1) {
+        badge.setAttribute("aria-label", `AI 준비도 ${readiness}%`);
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        launchConfetti(document.querySelector(".readiness-row"));
+        if (navigator.vibrate) navigator.vibrate([15, 40, 15]);
+      }
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  function launchConfetti(anchor) {
+    if (!anchor || prefersReducedMotion()) return;
+    const colors = [
+      "var(--lavender)",
+      "var(--coral)",
+      "var(--mint)",
+      "var(--yellow)",
+    ];
+    const burst = document.createElement("div");
+    burst.className = "confetti-burst";
+    for (let i = 0; i < 26; i += 1) {
+      const piece = document.createElement("span");
+      piece.className = "confetti-piece";
+      piece.style.setProperty("--x", `${(Math.random() - 0.5) * 240}px`);
+      piece.style.setProperty("--rot", `${Math.random() * 520 - 260}deg`);
+      piece.style.setProperty("--delay", `${Math.random() * 120}ms`);
+      piece.style.setProperty(
+        "--duration",
+        `${900 + Math.random() * 500}ms`,
+      );
+      piece.style.background = colors[i % colors.length];
+      burst.appendChild(piece);
+    }
+    anchor.appendChild(burst);
+    window.setTimeout(() => burst.remove(), 1700);
   }
 
   function roundedRect(context, x, y, width, height, radius) {
@@ -963,6 +1253,7 @@
     state.screen = "welcome";
     state.nickname = "";
     state.jobTasks = [];
+    state.mbti = null;
     state.currentQuestionIndex = 0;
     state.answers = {};
     state.feedbackVisible = false;
@@ -977,6 +1268,7 @@
     const actionTarget = event.target.closest("[data-action]");
     const optionTarget = event.target.closest("[data-option]");
     const taskTarget = event.target.closest("[data-task]");
+    const mbtiTarget = event.target.closest("[data-mbti]");
 
     if (optionTarget) {
       handleOption(optionTarget.dataset.option);
@@ -992,6 +1284,13 @@
       } else {
         showToast("자주 하는 업무는 최대 3개까지 선택할 수 있어요.");
       }
+      renderProfile();
+      return;
+    }
+
+    if (mbtiTarget) {
+      const value = mbtiTarget.dataset.mbti;
+      state.mbti = state.mbti === value ? null : value;
       renderProfile();
       return;
     }
