@@ -4,6 +4,7 @@
   const data = window.APP_DATA;
   const scoring = window.SCORING;
   const mbtiData = window.MBTI_DATA;
+  const SHEET_ENDPOINT = window.SHEET_ENDPOINT || "";
   const app = document.querySelector("#app");
   const toast = document.querySelector("#toast");
   const brand = document.querySelector(".brand");
@@ -21,6 +22,8 @@
     "거의 다 왔어요, 조금만 더 기다려주세요",
   ];
 
+  const BOOT_READY_MESSAGE = "저는 준비됐어요. 당신은 준비되셨나요?";
+
   const state = {
     screen: "loading",
     nickname: "",
@@ -30,6 +33,7 @@
     answers: {},
     feedbackVisible: false,
     optionOrder: {},
+    sheetSubmitted: false,
   };
 
   let preparedResultCardKey = "";
@@ -155,6 +159,7 @@
     if (reducedMotion) {
       barFill.style.width = "100%";
       percentEl.innerHTML = "100<span>%</span>";
+      messageEl.textContent = BOOT_READY_MESSAGE;
       enterButton.hidden = false;
       enterButton.classList.add("is-visible");
       return;
@@ -183,6 +188,7 @@
       if (progress < 1) {
         requestAnimationFrame(tick);
       } else {
+        messageEl.textContent = BOOT_READY_MESSAGE;
         enterButton.hidden = false;
         requestAnimationFrame(() => enterButton.classList.add("is-visible"));
       }
@@ -225,7 +231,7 @@
         </button>
         <p class="privacy-note">
           <span aria-hidden="true">🔒</span>
-          결과는 이 화면에서만 계산되며 저장되지 않아요.
+          응답은 다음 교육을 준비하는 목적으로만 기록돼요.
         </p>
       </section>
     `;
@@ -819,7 +825,7 @@
         </div>
 
         <p class="result-privacy">
-          이 결과는 지금 이 브라우저에서만 계산되었으며 별도로 저장되지 않았어요.
+          이 결과는 다음 교육을 준비하는 목적으로 기록돼요.
         </p>
       </section>
     `;
@@ -829,6 +835,55 @@
       .catch(() => updateShareButton(true));
 
     playResultReveal(result.readiness);
+
+    if (!state.sheetSubmitted) {
+      state.sheetSubmitted = true;
+      submitToSheet(buildSheetPayload(result));
+    }
+  }
+
+  function buildSheetPayload(result) {
+    const answerColumns = Object.fromEntries(
+      data.questions.map((question) => [
+        question.id,
+        (state.answers[question.id] || []).join(", "),
+      ]),
+    );
+    const jobTaskLabels = state.jobTasks
+      .map(
+        (value) =>
+          data.jobTasks.find((task) => task.value === value)?.label || value,
+      )
+      .join(", ");
+
+    return {
+      timestamp: new Date().toISOString(),
+      nickname: state.nickname,
+      jobTasks: jobTaskLabels,
+      mbti: state.mbti && state.mbti !== "unknown" ? state.mbti : "",
+      ...answerColumns,
+      awareness: result.normalized.awareness,
+      experience: result.normalized.experience,
+      prompting: result.normalized.prompting,
+      verification: result.normalized.verification,
+      security: result.normalized.security,
+      readiness: result.readiness,
+      resultType: data.resultTypes[result.type].name,
+    };
+  }
+
+  function submitToSheet(payload) {
+    if (!SHEET_ENDPOINT) return;
+    try {
+      fetch(SHEET_ENDPOINT, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload),
+      }).catch(() => {});
+    } catch (error) {
+      // 응답 기록 실패는 진단 결과 화면에 영향을 주지 않습니다.
+    }
   }
 
   function prefersReducedMotion() {
@@ -1258,6 +1313,7 @@
     state.answers = {};
     state.feedbackVisible = false;
     state.optionOrder = {};
+    state.sheetSubmitted = false;
     preparedResultCardKey = "";
     preparedResultCardPromise = null;
     render();
